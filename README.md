@@ -1,4 +1,4 @@
-# README - POS Ristro Clone
+# README - Zag Pos
 
 ## 📦 Tentang Project
 Clone aplikasi POS (Point of Sale) dari [pos.ristro.id](https://pos.ristro.id) menggunakan Next.js 14, React 18, TypeScript, dan Supabase.
