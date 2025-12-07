@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { CartItem } from '@/types';
 import { Button } from '@/components/ui/Button';
 import { useOrderStore } from '@/stores/orderStore';
@@ -13,66 +14,119 @@ interface CurrentOrderProps {
 export function CurrentOrder({ onPay }: CurrentOrderProps) {
   const { items, updateQuantity, removeItem, getTotal, clearCart } = useOrderStore();
   const { currency } = useSettingsStore();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const total = getTotal();
+  const totalItems = items.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className="w-96 bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col h-screen fixed right-0 top-0">
-      <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Pesanan</h2>
-        {items.length > 0 && (
-          <button
-            onClick={clearCart}
-            className="text-sm text-[var(--danger)] hover:underline"
+    <>
+      {/* Mobile Floating Action Button */}
+      {!isMobileOpen && items.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-[var(--bg-secondary)] border-t border-[var(--border)] lg:hidden z-30">
+          <Button 
+            className="w-full flex justify-between items-center py-6 shadow-lg"
+            onClick={() => setIsMobileOpen(true)}
           >
-            Hapus
-          </button>
-        )}
-      </div>
+            <div className="flex items-center gap-2">
+              <span className="bg-white/20 px-2 py-1 rounded text-sm font-bold">
+                {totalItems}
+              </span>
+              <span>Lihat Pesanan</span>
+            </div>
+            <span className="font-bold">{formatCurrency(total, currency)}</span>
+          </Button>
+        </div>
+      )}
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-[var(--text-secondary)]">
-            <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <p className="text-lg font-medium">Belum ada item</p>
-            <p className="text-sm">Pilih produk untuk menambahkan</p>
+      {/* Order Panel (Sidebar on Desktop, Full Overlay on Mobile) */}
+      <div className={`
+        fixed right-0 top-0 h-screen bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col z-40
+        w-full lg:w-96 transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'}
+      `}>
+        <div className="p-4 border-b border-[var(--border)] flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setIsMobileOpen(false)}
+              className="p-1 lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <h2 className="text-lg font-semibold text-[var(--text-primary)]">Pesanan</h2>
           </div>
-        ) : (
-          <ul className="space-y-3">
-            {items.map((item) => (
-              <OrderItemRow
-                key={item.id}
-                item={item}
-                onUpdateQuantity={(qty) => updateQuantity(item.id, qty)}
-                onRemove={() => removeItem(item.id)}
-                currency={currency}
-              />
-            ))}
-          </ul>
-        )}
-      </div>
+          
+          {items.length > 0 && (
+            <button
+              onClick={() => {
+                if(confirm('Hapus semua item?')) {
+                  clearCart();
+                  setIsMobileOpen(false);
+                }
+              }}
+              className="text-sm text-[var(--danger)] hover:underline"
+            >
+              Hapus Semua
+            </button>
+          )}
+        </div>
 
-      <div className="p-4 border-t border-[var(--border)] space-y-4">
-        <div className="flex justify-between items-center">
-          <span className="text-[var(--text-secondary)]">Subtotal</span>
-          <span className="text-[var(--text-primary)] font-medium">{formatCurrency(total, currency)}</span>
+        <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-[var(--text-secondary)]">
+              <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p className="text-lg font-medium">Belum ada item</p>
+              <p className="text-sm">Pilih produk untuk menambahkan</p>
+              <Button 
+                variant="secondary" 
+                className="mt-4 lg:hidden"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                Kembali ke Menu
+              </Button>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {items.map((item) => (
+                <OrderItemRow
+                  key={item.id}
+                  item={item}
+                  onUpdateQuantity={(qty) => updateQuantity(item.id, qty)}
+                  onRemove={() => removeItem(item.id)}
+                  currency={currency}
+                />
+              ))}
+            </ul>
+          )}
         </div>
-        <div className="flex justify-between items-center text-lg">
-          <span className="font-semibold text-[var(--text-primary)]">Total</span>
-          <span className="font-bold text-[var(--accent)]">{formatCurrency(total, currency)}</span>
+
+        <div className="p-4 border-t border-[var(--border)] space-y-4 bg-[var(--bg-secondary)]">
+          <div className="flex justify-between items-center">
+            <span className="text-[var(--text-secondary)]">Subtotal</span>
+            <span className="text-[var(--text-primary)] font-medium">{formatCurrency(total, currency)}</span>
+          </div>
+          <div className="flex justify-between items-center text-lg">
+            <span className="font-semibold text-[var(--text-primary)]">Total</span>
+            <span className="font-bold text-[var(--accent)]">{formatCurrency(total, currency)}</span>
+          </div>
+          <Button
+            className="w-full"
+            size="lg"
+            disabled={items.length === 0}
+            onClick={() => {
+              onPay();
+              setIsMobileOpen(false);
+            }}
+          >
+            Bayar {formatCurrency(total, currency)}
+          </Button>
         </div>
-        <Button
-          className="w-full"
-          size="lg"
-          disabled={items.length === 0}
-          onClick={onPay}
-        >
-          Bayar {formatCurrency(total, currency)}
-        </Button>
       </div>
-    </div>
+    </>
   );
 }
 

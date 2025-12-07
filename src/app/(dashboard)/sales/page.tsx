@@ -146,8 +146,8 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="pr-96 min-h-screen">
-      <div className="p-6">
+    <div className="lg:pr-96 min-h-screen pb-24 lg:pb-0">
+      <div className="p-4 md:p-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Penjualan</h1>
           <p className="text-[var(--text-secondary)]">Pilih produk untuk ditambahkan ke pesanan</p>
